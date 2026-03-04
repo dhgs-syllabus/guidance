@@ -1,0 +1,11 @@
+/* Tailwind CSS v4 - エントリーポイント */
+@import "tailwindcss";
+
+/* DHU大学院 履修ガイダンスポータル グローバルスタイル */
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
