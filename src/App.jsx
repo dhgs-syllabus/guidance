@@ -1,6 +1,11 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { SYLLABI, MODULES, QUARTERS } from "./data/syllabi";
 import { FAQS, FAQ_CATS } from "./data/faqs";
+
+// 曜日の表示順序
+const DAY_ORDER = ["月", "水", "金", "土", "集中", "-"];
+const DAY_LABELS = { "月": "月曜日", "水": "水曜日", "金": "金曜日", "土": "土曜日", "集中": "集中講義", "-": "通年・その他" };
+const DAY_ICONS = { "月": "🟦", "水": "🟩", "金": "🟧", "土": "🟪", "集中": "⚡", "-": "📅" };
 
 // タグコンポーネント
 const Tag = ({ label, color = "blue" }) => {
@@ -32,6 +37,87 @@ const CAREERS = [
   { title: "研究者 / アカデミア", icon: "📚", desc: "デジタルコンテンツ領域の学術研究", skills: ["論文執筆", "研究設計", "学会発表"], recommendedIds: [13, 3, 19, 49, 16] },
 ];
 
+// シラバス詳細モーダル
+const SyllabusModal = ({ syllabus, onClose }) => {
+  if (!syllabus) return null;
+  const s = syllabus;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      <div className="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        {/* ヘッダー */}
+        <div className="sticky top-0 bg-white/95 backdrop-blur border-b border-gray-100 px-6 py-4 flex items-start justify-between rounded-t-2xl">
+          <div className="flex-1 pr-4">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <Tag label={s.type} color={typeColor(s.type)} />
+              <Tag label={s.quarter} color="amber" />
+              <Tag label={`${s.credits}単位`} color="green" />
+              <Tag label={s.module} color="gray" />
+            </div>
+            <h2 className="text-lg font-bold text-gray-900">{s.name}</h2>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none p-1 transition-colors">✕</button>
+        </div>
+        {/* 本文 */}
+        <div className="px-6 py-5 space-y-5">
+          {/* 基本情報 */}
+          <div className="grid grid-cols-2 gap-3">
+            <InfoRow label="担当教員" value={s.instructor} />
+            <InfoRow label="曜日・時限" value={s.day !== "-" ? `${s.day}曜 ${s.period}` : "通年"} />
+            <InfoRow label="授業形式" value={s.delivery} />
+            <InfoRow label="定員" value={s.capacity ? `${s.capacity}名` : "制限なし"} />
+            <InfoRow label="科目区分" value={s.type} />
+            <InfoRow label="モジュール" value={s.module} />
+          </div>
+          {/* 概要 */}
+          <div>
+            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">授業概要</h4>
+            <p className="text-sm text-gray-700 leading-relaxed">{s.desc}</p>
+          </div>
+          {/* キーワード */}
+          <div>
+            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">キーワード</h4>
+            <div className="flex flex-wrap gap-1.5">
+              {s.keywords.map(k => (
+                <span key={k} className="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2.5 py-1 rounded-full">{k}</span>
+              ))}
+            </div>
+          </div>
+          {/* 将来の拡張エリア（授業計画、到達目標、評価方法） */}
+          {s.schedule && (
+            <div>
+              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">授業計画</h4>
+              <ol className="text-sm text-gray-700 space-y-1 list-decimal list-inside">
+                {s.schedule.map((item, i) => <li key={i}>{item}</li>)}
+              </ol>
+            </div>
+          )}
+          {s.goals && (
+            <div>
+              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">到達目標</h4>
+              <p className="text-sm text-gray-700 leading-relaxed">{s.goals}</p>
+            </div>
+          )}
+          {s.evaluation && (
+            <div>
+              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">評価方法</h4>
+              <p className="text-sm text-gray-700 leading-relaxed">{s.evaluation}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// 情報行コンポーネント
+const InfoRow = ({ label, value }) => (
+  <div className="bg-gray-50 rounded-lg px-3 py-2">
+    <span className="text-xs text-gray-400 block">{label}</span>
+    <span className="text-sm text-gray-800 font-medium">{value}</span>
+  </div>
+);
+
 export default function App() {
   const [tab, setTab] = useState("syllabus");
   const [sylSearch, setSylSearch] = useState("");
@@ -45,6 +131,8 @@ export default function App() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const chatEndRef = useRef(null);
+  const [collapsedDays, setCollapsedDays] = useState({});
+  const [selectedSyllabus, setSelectedSyllabus] = useState(null);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
@@ -54,6 +142,20 @@ export default function App() {
     (sylQuarter === "すべて" || s.quarter === sylQuarter) &&
     (sylSearch === "" || s.name.includes(sylSearch) || s.instructor.includes(sylSearch) || s.keywords.some(k => k.includes(sylSearch)) || s.desc.includes(sylSearch))
   );
+
+  // 曜日ごとにグループ化
+  const groupedByDay = useMemo(() => {
+    const groups = {};
+    for (const day of DAY_ORDER) {
+      const items = filteredSyl.filter(s => s.day === day);
+      if (items.length > 0) groups[day] = items;
+    }
+    return groups;
+  }, [filteredSyl]);
+
+  const toggleDay = (day) => {
+    setCollapsedDays(prev => ({ ...prev, [day]: !prev[day] }));
+  };
 
   // FAQのフィルタリング
   const filteredFaq = FAQS.filter(f =>
@@ -143,29 +245,56 @@ export default function App() {
               </select>
             </div>
             <p className="text-xs text-gray-400 mb-4">{filteredSyl.length}科目</p>
-            <div className="grid gap-3">
-              {filteredSyl.map(s => (
-                <div key={s.id} className="bg-white border border-gray-200 rounded-xl p-4 hover:border-gray-300 hover:shadow-sm transition-all">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <Tag label={s.type} color={typeColor(s.type)} />
-                        <Tag label={s.quarter} color="amber" />
-                        <Tag label={`${s.credits}単位`} color="green" />
-                        <Tag label={s.module} color="gray" />
-                        {s.day !== "-" && <span className="text-xs text-gray-400">{s.day}{s.period}</span>}
-                      </div>
-                      <h3 className="font-semibold text-gray-900">{s.name}</h3>
-                      <p className="text-xs text-gray-500 mt-1">{s.instructor}{s.capacity ? ` ／ 定員${s.capacity}名` : ""} ／ {s.delivery}</p>
-                      <p className="text-xs text-gray-500 mt-1 line-clamp-2">{s.desc}</p>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {s.keywords.map(k => (
-                          <span key={k} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded cursor-pointer hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                            onClick={() => setSylSearch(k)}>{k}</span>
-                        ))}
-                      </div>
+
+            {/* 曜日別グループ表示 */}
+            <div className="space-y-4">
+              {Object.entries(groupedByDay).map(([day, courses]) => (
+                <div key={day} className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+                  {/* 曜日ヘッダー */}
+                  <button
+                    onClick={() => toggleDay(day)}
+                    className="w-full flex items-center justify-between px-5 py-3.5 bg-gradient-to-r from-gray-50 to-white hover:from-gray-100 transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-lg">{DAY_ICONS[day]}</span>
+                      <span className="font-semibold text-gray-800">{DAY_LABELS[day]}</span>
+                      <span className="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 rounded-full font-medium">
+                        {courses.length}科目
+                      </span>
                     </div>
-                  </div>
+                    <span className={`text-gray-400 text-sm transition-transform duration-200 ${collapsedDays[day] ? '' : 'rotate-180'}`}>▲</span>
+                  </button>
+                  {/* 科目リスト */}
+                  {!collapsedDays[day] && (
+                    <div className="grid gap-3 p-4 pt-2">
+                      {courses.map(s => (
+                        <div key={s.id} className="bg-white border border-gray-200 rounded-xl p-4 hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer group"
+                          onClick={() => setSelectedSyllabus(s)}>
+                          <div className="flex items-start gap-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <Tag label={s.type} color={typeColor(s.type)} />
+                                <Tag label={s.quarter} color="amber" />
+                                <Tag label={`${s.credits}単位`} color="green" />
+                                <Tag label={s.module} color="gray" />
+                                {s.day !== "-" && <span className="text-xs text-gray-400">{s.day}{s.period}</span>}
+                              </div>
+                              <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">{s.name}</h3>
+                              <p className="text-xs text-gray-500 mt-1">{s.instructor}{s.capacity ? ` ／ 定員${s.capacity}名` : ""} ／ {s.delivery}</p>
+                              <p className="text-xs text-gray-500 mt-1 line-clamp-2">{s.desc}</p>
+                              <div className="mt-2 flex flex-wrap gap-1.5">
+                                {s.keywords.map(k => (
+                                  <span key={k} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded cursor-pointer hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                                    onClick={(e) => { e.stopPropagation(); setSylSearch(k); }}>{k}</span>
+                                ))}
+                              </div>
+                            </div>
+                            <span className="text-xs text-gray-300 group-hover:text-blue-400 transition-colors mt-1">詳細 →</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
               {filteredSyl.length === 0 && <p className="text-gray-400 text-center py-10">該当する科目が見つかりません</p>}
@@ -279,6 +408,9 @@ export default function App() {
           </div>
         )}
       </div>
+
+      {/* シラバス詳細モーダル */}
+      <SyllabusModal syllabus={selectedSyllabus} onClose={() => setSelectedSyllabus(null)} />
     </div>
   );
 }
