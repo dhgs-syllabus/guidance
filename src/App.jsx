@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { SYLLABI, MODULES, QUARTERS } from "./data/syllabi";
 import { FAQS, FAQ_CATS } from "./data/faqs";
+import ScheduleTab from "./components/ScheduleTab";
 
 // 曜日の表示順序
 const DAY_ORDER = ["月", "水", "金", "土", "集中", "-"];
@@ -196,6 +197,7 @@ export default function App() {
 
   const tabs = [
     { id: "syllabus", label: "📚 シラバス" },
+    { id: "schedule", label: "📅 スケジュール" },
     { id: "faq", label: "❓ FAQ" },
     { id: "career", label: "🎯 キャリアマップ" },
     { id: "chat", label: "💬 チャット" },
@@ -301,6 +303,9 @@ export default function App() {
             </div>
           </div>
         )}
+
+        {/* ===== スケジュール ===== */}
+        {tab === "schedule" && <ScheduleTab />}
 
         {/* ===== FAQ ===== */}
         {tab === "faq" && (
