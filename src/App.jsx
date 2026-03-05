@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { SYLLABI, MODULES, QUARTERS } from "./data/syllabi";
 import { FAQS, FAQ_CATS } from "./data/faqs";
+import { CAREERS, CAREER_CATEGORIES } from "./data/careers";
 import ScheduleTab from "./components/ScheduleTab";
 
 // 曜日の表示順序
@@ -28,15 +29,6 @@ const typeColor = (type) => {
   return "blue";
 };
 
-// キャリアマップデータ（実際の科目系統に基づく）
-const CAREERS = [
-  { title: "コンテンツプロデューサー", icon: "🎬", desc: "デジタルコンテンツの企画・制作・運用を統括", skills: ["コンテンツマネジメント", "PR", "ビジネスプラン"], recommendedIds: [6, 10, 9, 19, 48] },
-  { title: "UXデザイナー / クリエイティブディレクター", icon: "🎨", desc: "ユーザー体験とクリエイティブ表現の設計", skills: ["デザイン", "アートディレクション", "プロトタイピング"], recommendedIds: [1, 17, 18, 21, 44] },
-  { title: "AIエンジニア / データサイエンティスト", icon: "🤖", desc: "AI・データを活用したシステム開発", skills: ["データサイエンス", "プログラミング", "機械学習"], recommendedIds: [11, 41, 51, 50, 16] },
-  { title: "XR / メタバース開発者", icon: "🥽", desc: "VR/AR/MR技術で没入体験を創造", skills: ["XR開発", "リアルタイムCG", "空間設計"], recommendedIds: [53, 43, 40, 35, 21] },
-  { title: "起業家 / ビジネスイノベーター", icon: "🚀", desc: "デジタル領域での新規事業創出", skills: ["ビジネスプランニング", "マーケティング", "事業設計"], recommendedIds: [9, 25, 8, 20, 7] },
-  { title: "研究者 / アカデミア", icon: "📚", desc: "デジタルコンテンツ領域の学術研究", skills: ["論文執筆", "研究設計", "学会発表"], recommendedIds: [13, 3, 19, 49, 16] },
-];
 
 // シラバス詳細モーダル
 const SyllabusModal = ({ syllabus, onClose }) => {
@@ -70,11 +62,7 @@ const SyllabusModal = ({ syllabus, onClose }) => {
             <InfoRow label="科目区分" value={s.type} />
             <InfoRow label="モジュール" value={s.module} />
           </div>
-          {/* 概要 */}
-          <div>
-            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">授業概要</h4>
-            <p className="text-sm text-gray-700 leading-relaxed">{s.desc}</p>
-          </div>
+
           {/* キーワード */}
           <div>
             <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">キーワード</h4>
@@ -84,25 +72,35 @@ const SyllabusModal = ({ syllabus, onClose }) => {
               ))}
             </div>
           </div>
-          {/* 将来の拡張エリア（授業計画、到達目標、評価方法） */}
-          {s.schedule && (
-            <div>
-              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">授業計画</h4>
-              <ol className="text-sm text-gray-700 space-y-1 list-decimal list-inside">
-                {s.schedule.map((item, i) => <li key={i}>{item}</li>)}
-              </ol>
-            </div>
-          )}
+
+          {/* 概要 */}
+          <div>
+            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">授業概要</h4>
+            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{s.overview}</p>
+          </div>
+
           {s.goals && (
             <div>
               <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">到達目標</h4>
-              <p className="text-sm text-gray-700 leading-relaxed">{s.goals}</p>
+              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{s.goals}</p>
             </div>
           )}
           {s.evaluation && (
             <div>
               <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">評価方法</h4>
-              <p className="text-sm text-gray-700 leading-relaxed">{s.evaluation}</p>
+              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{s.evaluation}</p>
+            </div>
+          )}
+          {s.textbook && s.textbook !== "なし" && s.textbook !== "特になし" && (
+            <div>
+              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">教科書</h4>
+              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{s.textbook}</p>
+            </div>
+          )}
+          {s.references && s.references !== "なし" && s.references !== "特になし" && (
+            <div>
+              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">参考文献</h4>
+              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{s.references}</p>
             </div>
           )}
         </div>
@@ -128,6 +126,7 @@ export default function App() {
   const [faqCat, setFaqCat] = useState("すべて");
   const [openFaq, setOpenFaq] = useState(null);
   const [selectedCareer, setSelectedCareer] = useState(null);
+  const [careerCat, setCareerCat] = useState("すべて");
   const [messages, setMessages] = useState([{ role: "assistant", content: "こんにちは！DHU大学院の履修について何でも聞いてください。シラバスやFAQの内容をもとに回答します。" }]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -164,8 +163,11 @@ export default function App() {
     (f.q.includes(faqSearch) || f.a.includes(faqSearch))
   );
 
-  // キャリアマップの推奨科目
-  const careerCourses = selectedCareer ? SYLLABI.filter(s => selectedCareer.recommendedIds.includes(s.id)) : [];
+  // キャリアマップのフィルタリング
+  const filteredCareers = careerCat === "すべて" ? CAREERS : CAREERS.filter(c => c.category === careerCat);
+  const careerRecommendations = selectedCareer
+    ? selectedCareer.recommendations.map(r => ({ ...r, course: SYLLABI.find(s => s.id === r.id) })).filter(r => r.course)
+    : [];
 
   // チャット送信（APIキー未設定時はローカル応答）
   const sendMessage = async () => {
@@ -378,35 +380,60 @@ export default function App() {
         {/* ===== キャリアマップ ===== */}
         {tab === "career" && (
           <div>
-            <p className="text-gray-500 text-sm mb-5">目指すキャリアを選ぶと、推奨履修科目が表示されます。</p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
-              {CAREERS.map(c => (
-                <button key={c.title} onClick={() => setSelectedCareer(selectedCareer?.title === c.title ? null : c)}
-                  className={`p-4 rounded-xl border text-left transition-all ${selectedCareer?.title === c.title ? "border-blue-400 bg-blue-50 shadow-sm" : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"}`}>
-                  <div className="text-2xl mb-2">{c.icon}</div>
-                  <div className="font-semibold text-sm text-gray-900">{c.title}</div>
-                  <div className="text-xs text-gray-500 mt-1">{c.desc}</div>
+            <p className="text-gray-500 text-sm mb-4">目指すキャリアを選ぶと、推奨履修科目とその理由が表示されます。</p>
+
+            {/* カテゴリフィルタ */}
+            <div className="flex flex-wrap gap-2 mb-5">
+              {CAREER_CATEGORIES.map(cat => (
+                <button key={cat} onClick={() => { setCareerCat(cat); setSelectedCareer(null); }}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${careerCat === cat ? "bg-blue-500 text-white border-blue-500" : "bg-white text-gray-600 border-gray-300 hover:border-blue-300 hover:text-blue-600"}`}>
+                  {cat}
                 </button>
               ))}
             </div>
 
+            {/* キャリアカード一覧 */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+              {filteredCareers.map(c => (
+                <button key={c.title} onClick={() => setSelectedCareer(selectedCareer?.title === c.title ? null : c)}
+                  className={`p-3.5 rounded-xl border text-left transition-all ${selectedCareer?.title === c.title ? "border-blue-400 bg-blue-50 shadow-md ring-1 ring-blue-200" : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"}`}>
+                  <div className="text-2xl mb-1.5">{c.icon}</div>
+                  <div className="font-semibold text-xs text-gray-900 leading-snug">{c.title}</div>
+                  <div className="text-xs text-gray-400 mt-1 leading-relaxed line-clamp-2">{c.desc}</div>
+                  <div className="mt-2">
+                    <span className={`text-xs px-1.5 py-0.5 rounded border ${selectedCareer?.title === c.title ? "bg-blue-100 text-blue-600 border-blue-200" : "bg-gray-50 text-gray-400 border-gray-200"}`}>{c.category}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* 推奨科目詳細 */}
             {selectedCareer && (
-              <div className="bg-white border border-blue-200 rounded-xl p-5 shadow-sm">
-                <h3 className="font-semibold text-blue-700 mb-3">{selectedCareer.icon} {selectedCareer.title} への推奨履修</h3>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {selectedCareer.skills.map(sk => (
-                    <span key={sk} className="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2 py-1 rounded">{sk}</span>
-                  ))}
+              <div className="bg-white border border-blue-200 rounded-xl shadow-sm overflow-hidden">
+                <div className="bg-gradient-to-r from-blue-50 to-white px-5 py-4 border-b border-blue-100">
+                  <h3 className="font-bold text-blue-800 text-base">{selectedCareer.icon} {selectedCareer.title}</h3>
+                  <p className="text-xs text-blue-600 mt-1">{selectedCareer.desc}</p>
                 </div>
-                <div className="grid gap-2">
-                  {careerCourses.map(s => (
-                    <div key={s.id} className="flex items-center gap-3 bg-gray-50 rounded-lg px-4 py-3">
-                      <span className="text-xs text-gray-400 font-mono w-8">{s.quarter}</span>
-                      <span className="text-sm text-gray-900 font-medium flex-1">{s.name}</span>
-                      <Tag label={s.type} color={typeColor(s.type)} />
-                      <Tag label={`${s.credits}単位`} color="green" />
-                    </div>
-                  ))}
+                <div className="p-4">
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">推奨履修科目（{careerRecommendations.length}科目）</h4>
+                  <div className="grid gap-2">
+                    {careerRecommendations.map(({ course: s, reason }) => (
+                      <div key={s.id}
+                        className="flex items-start gap-3 bg-gray-50 hover:bg-blue-50 rounded-lg px-4 py-3 cursor-pointer transition-colors group"
+                        onClick={() => setSelectedSyllabus(s)}>
+                        <span className="text-xs text-gray-400 font-mono w-8 mt-0.5 flex-shrink-0">{s.quarter}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm text-gray-900 font-medium group-hover:text-blue-700 transition-colors">{s.name}</span>
+                            <Tag label={s.type} color={typeColor(s.type)} />
+                            <Tag label={`${s.credits}単位`} color="green" />
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">{reason}</p>
+                        </div>
+                        <span className="text-xs text-gray-300 group-hover:text-blue-400 mt-0.5 flex-shrink-0 transition-colors">詳細→</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}

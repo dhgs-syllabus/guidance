@@ -1,7 +1,8 @@
 // DHU大学院 2026年度シラバスデータ
 // Google Spreadsheet (ID: 1w76UXScforLpsFiM-NgH0fugEDmKzKSE) から抽出
+import syllabusData from './syllabi.json';
 
-export const SYLLABI = [
+const STATIC_SYLLABI = [
     // ===== 1Q =====
     { id: 1, name: "コンテンツデザインB", quarter: "1Q", day: "月", period: "7限", module: "応用・実践", type: "選択必修（D系）", credits: 1, capacity: 80, instructor: "末永 剛", keywords: ["デザイン", "アートディレクション", "広告", "生成AI", "画像生成"], desc: "生成AIを中心とした画像や動画のコントロールについて講義と実践を行う。目的に合ったツールを活かしたアウトプット力を身につけ、クリエイティブコントロールを身につけることを目的とする。", delivery: "対面+遠隔" },
     { id: 2, name: "デジタル表現基礎A（アダプティブラーニング）", quarter: "1Q", day: "月", period: "8限", module: "基礎・理論", type: "選択", credits: 1, capacity: 25, instructor: "石川 大樹", keywords: ["eラーニング", "自己調整学習", "アダプティブ・ラーニング", "アクティブ・ラーニング"], desc: "デジタルハリウッドの動画教材の学習を通じてクリエイティブツールの基礎の習得とeラーニングの能動的学習方法の習得を目指す。", delivery: "遠隔" },
@@ -72,6 +73,24 @@ export const SYLLABI = [
     { id: 57, name: "修了課題制作", quarter: "通年", day: "-", period: "-", module: "研究", type: "必修", credits: 4, capacity: null, instructor: "指導教員", keywords: ["修了課題", "論文", "制作", "最終発表"], desc: "修了課題の制作・論文執筆を行い、最終発表・審査を受ける。", delivery: "個別指導" },
     { id: 58, name: "ラボプロジェクト", quarter: "通年", day: "-", period: "-", module: "研究", type: "必修", credits: 2, capacity: null, instructor: "指導教員", keywords: ["ラボ", "プロジェクト", "共同研究", "チーム"], desc: "研究室単位でのプロジェクト型研究活動。チームでの共同研究を通じて実践力を養う。", delivery: "個別指導" },
 ];
+
+export const SYLLABI = STATIC_SYLLABI.map(s => {
+    const detail = syllabusData.find(d =>
+        d.subject.replace(/\s+/g, '') === s.name.replace(/\s+/g, '') ||
+        s.name.includes(d.subject)
+    );
+    if (detail) {
+        return {
+            ...s,
+            overview: detail.overview,
+            goals: detail.objectives,
+            evaluation: detail.evaluation,
+            textbook: detail.textbook,
+            references: detail.references
+        };
+    }
+    return { ...s, overview: s.desc };
+});
 
 // カテゴリ（モジュール）
 export const MODULES = ["すべて", "基礎・理論", "応用・実践", "研究"];

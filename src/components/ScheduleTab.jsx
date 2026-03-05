@@ -1,58 +1,106 @@
 import { useState, useMemo } from 'react';
 import SCHEDULE_DATA from '../data/schedule.json';
 
-const DAY_PERIOD_ORDER = [
-    "月1", "月2", "月3", "月4", "月5", "月6", "月7", "月8",
-    "火1", "火2", "火3", "火4", "火5", "火6", "火7", "火8",
-    "水1", "水2", "水3", "水4", "水5", "水6", "水7", "水8",
-    "木1", "木2", "木3", "木4", "木5", "木6", "木7", "木8",
-    "金1", "金2", "金3", "金4", "金5", "金6", "金7", "金8",
-    "土1", "土2", "土3", "土4", "土5", "土6", "土7", "土8",
-];
+const dayOrder = { '月': 1, '火': 2, '水': 3, '木': 4, '金': 5, '土': 6, '日': 7 };
 
 export default function ScheduleTab() {
     const [selectedItem, setSelectedItem] = useState(null);
+    const [selectedQ, setSelectedQ] = useState("すべて");
+
+    // 対象となるQのリストを取得
+    const quarters = useMemo(() => {
+        const qs = new Set(SCHEDULE_DATA.map(item => item.Quarter));
+        return ["すべて", ...Array.from(qs)].filter(Boolean);
+    }, []);
 
     // 曜日・時限順にソートして整理
-    const sortedSchedule = useMemo(() => {
-        return [...SCHEDULE_DATA].sort((a, b) => {
-            const idxA = DAY_PERIOD_ORDER.indexOf(a['曜日']);
-            const idxB = DAY_PERIOD_ORDER.indexOf(b['曜日']);
-            if (idxA === -1 && idxB === -1) return 0;
-            if (idxA === -1) return 1;
-            if (idxB === -1) return -1;
-            return idxA - idxB;
+    const filteredSchedule = useMemo(() => {
+        let raw = [...SCHEDULE_DATA];
+        if (selectedQ !== "すべて") {
+            raw = raw.filter(item => item.Quarter === selectedQ);
+        }
+        return raw.sort((a, b) => {
+            // Qごとのソートを追加
+            const qOrder = { '1Q': 1, '2Q': 2, '夏季集中': 3, '3Q': 4, '4Q': 5 };
+            const aQ = qOrder[a.Quarter] || 99;
+            const bQ = qOrder[b.Quarter] || 99;
+            if (aQ !== bQ) return aQ - bQ;
+
+            // 「月7」「水78」「土34」などをパースしてソートする
+            const getOrder = (str) => {
+                if (!str) return 999;
+                const dMatch = str.match(/[月火水木金土日]/);
+                const tMatch = str.match(/\d/);
+                const d = dMatch ? dayOrder[dMatch[0]] : 99;
+                const t = tMatch ? parseInt(tMatch[0], 10) : 99;
+                return d * 100 + t;
+            };
+
+            return getOrder(a['曜日']) - getOrder(b['曜日']);
         });
-    }, []);
+    }, [selectedQ]);
+
+    // Qごとにグループ分け
+    const groupedByQ = useMemo(() => {
+        const groups = {};
+        filteredSchedule.forEach(item => {
+            const q = item.Quarter || 'その他';
+            if (!groups[q]) groups[q] = [];
+            groups[q].push(item);
+        });
+        return groups;
+    }, [filteredSchedule]);
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <p className="text-gray-500 text-sm">2026年度 開講スケジュール（全{sortedSchedule.length}件）</p>
+            <div className="flex items-center justify-between flex-wrap gap-4">
+                <p className="text-gray-500 text-sm">2026年度 開講スケジュール（全{filteredSchedule.length}件）</p>
+                <div className="flex gap-2">
+                    {quarters.map(q => (
+                        <button
+                            key={q}
+                            onClick={() => setSelectedQ(q)}
+                            className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-colors ${selectedQ === q ? 'bg-blue-500 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'}`}
+                        >
+                            {q}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* スケジュール一覧 */}
-            <div className="grid gap-4 md:grid-cols-2">
-                {sortedSchedule.map((item, idx) => (
-                    <div
-                        key={idx}
-                        onClick={() => setSelectedItem(item)}
-                        className="bg-white border border-gray-200 rounded-xl p-5 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group"
-                    >
-                        <div className="flex items-start justify-between mb-3">
-                            <span className="text-sm font-bold bg-blue-50 text-blue-700 px-3 py-1 rounded-lg border border-blue-100">
-                                {item['曜日']}
-                            </span>
-                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                {item['教室'] || '未定'}
-                            </span>
-                        </div>
-                        <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
-                            {item['科目名']}
+            <div className="space-y-8">
+                {Object.entries(groupedByQ).map(([q, items]) => (
+                    <div key={q} className="space-y-4">
+                        <h3 className="text-lg font-bold text-gray-800 border-b pb-2 flex items-center gap-2">
+                            <span className="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded">開講時期</span>
+                            {q}
+                            <span className="text-xs text-gray-400 font-normal ml-2">({items.length}件)</span>
                         </h3>
-                        <p className="text-sm text-gray-600 mt-2 flex items-center gap-1">
-                            <span className="text-gray-400">👤</span> {item['担当教員']}
-                        </p>
+                        <div className="grid gap-4 md:grid-cols-2">
+                            {items.map((item, idx) => (
+                                <div
+                                    key={idx}
+                                    onClick={() => setSelectedItem(item)}
+                                    className="bg-white border border-gray-200 rounded-xl p-5 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group"
+                                >
+                                    <div className="flex items-start justify-between mb-3">
+                                        <span className="text-sm font-bold bg-blue-50 text-blue-700 px-3 py-1 rounded-lg border border-blue-100">
+                                            {item['曜日']}
+                                        </span>
+                                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                            {item['教室'] || '未定'}
+                                        </span>
+                                    </div>
+                                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
+                                        {item['科目名']}
+                                    </h3>
+                                    <p className="text-sm text-gray-600 mt-2 flex items-center gap-1">
+                                        <span className="text-gray-400">👤</span> {item['担当教員']}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 ))}
             </div>
@@ -83,16 +131,16 @@ export default function ScheduleTab() {
 
                         {/* 詳細コンテンツ（スクロール領域） */}
                         <div className="p-6 overflow-y-auto bg-gray-50 h-full">
-                            <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                            <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 mb-4">
                                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 border-b pb-2">授業スケジュール・連絡内容</h4>
                                 <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                                    {selectedItem['連絡内容']}
+                                    {selectedItem['連絡内容'] || selectedItem['内容']}
                                 </div>
                             </div>
 
                             {/* 備考情報（Zoomリンクなどがある場合） */}
                             {(selectedItem['Zoom'] || selectedItem['収録映像（BOX）']) && (
-                                <div className="mt-4 bg-white rounded-xl p-5 shadow-sm border border-gray-100 space-y-3">
+                                <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 space-y-3">
                                     {selectedItem['Zoom'] && (
                                         <div>
                                             <span className="text-xs text-gray-500 block mb-1">Zoom URL</span>
