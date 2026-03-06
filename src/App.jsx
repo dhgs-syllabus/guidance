@@ -118,7 +118,7 @@ const InfoRow = ({ label, value }) => (
 );
 
 export default function App() {
-  const [tab, setTab] = useState("syllabus");
+  const [tab, setTab] = useState("guidance");
   const [sylSearch, setSylSearch] = useState("");
   const [sylModule, setSylModule] = useState("すべて");
   const [sylQuarter, setSylQuarter] = useState("すべて");
@@ -211,6 +211,7 @@ export default function App() {
   };
 
   const tabs = [
+    { id: "guidance", label: "📖 ガイダンス" },
     { id: "syllabus", label: "📚 シラバス" },
     { id: "schedule", label: "📅 スケジュール" },
     { id: "faq", label: "❓ FAQ" },
@@ -244,6 +245,26 @@ export default function App() {
       </div>
 
       <div className="max-w-5xl mx-auto p-6">
+
+        {/* ===== ガイダンス資料 ===== */}
+        {tab === "guidance" && (
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+            <div className="bg-gradient-to-r from-gray-50 to-white px-5 py-4 border-b border-gray-200">
+              <h3 className="font-bold text-gray-800 text-base">2026年度前期 履修ガイダンス</h3>
+              <p className="text-xs text-gray-500 mt-1">カリキュラムの全体像や修了要件についてはこちらのスライドをご確認ください。</p>
+            </div>
+            <div className="aspect-video w-full bg-gray-100 flex items-center justify-center">
+              <iframe
+                src="https://docs.google.com/presentation/d/1BM6ZNRsDmaDe6aBQMihjX-9KoTQpNSuM3-rm8g-uFuc/embed?start=false&loop=false&delayms=3000"
+                frameBorder="0"
+                width="100%"
+                height="100%"
+                allowFullScreen={true}
+                title="2026年度前期 履修ガイダンス"
+              ></iframe>
+            </div>
+          </div>
+        )}
 
         {/* ===== シラバス ===== */}
         {tab === "syllabus" && (

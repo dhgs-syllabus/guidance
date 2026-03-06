@@ -46,7 +46,7 @@ const STATIC_SYLLABI = [
     { id: 34, name: "デジタル表現基礎B", quarter: "3Q", day: "月", period: "8限", module: "基礎・理論", type: "選択", credits: 1, capacity: 25, instructor: "石川 大樹", keywords: ["eラーニング", "クリエイティブツール", "自己調整学習"], desc: "デジタル表現基礎Aの発展編。より高度なクリエイティブツールを動画教材で学ぶ。", delivery: "遠隔" },
     { id: 35, name: "エマージングテクノロジー", quarter: "3Q", day: "水", period: "7限", module: "基礎・理論", type: "選択", credits: 1, capacity: 80, instructor: "安藤 幸央", keywords: ["新興技術", "テクノロジートレンド", "イノベーション"], desc: "新興テクノロジーの動向と社会への影響を学ぶ。", delivery: "遠隔" },
     { id: 36, name: "特別講義T", quarter: "3Q", day: "水", period: "7限", module: "応用・実践", type: "選択", credits: 1, capacity: 80, instructor: "特別講師", keywords: ["特別講義", "テクノロジー"], desc: "テクノロジー分野の特別講義。", delivery: "対面+遠隔" },
-    { id: 37, name: "先端芸術原論", quarter: "3Q", day: "水", period: "8限", module: "基礎・理論", type: "選択", credits: 1, capacity: 80, instructor: "特別講師", keywords: ["メディアアート", "デジタルアート", "芸術理論"], desc: "先端的な芸術表現の理論と実践を学ぶ。", delivery: "対面" },
+    { id: 37, name: "先端芸術原論", quarter: "3Q", day: "水", period: "8限", module: "基礎・理論", type: "必修", credits: 1, capacity: 80, instructor: "特別講師", keywords: ["メディアアート", "デジタルアート", "芸術理論"], desc: "先端的な芸術表現の理論と実践を学ぶ。", delivery: "対面" },
     { id: 38, name: "知的財産活用実践", quarter: "3Q", day: "水", period: "8限", module: "応用・実践", type: "選択", credits: 1, capacity: 80, instructor: "高瀬 亜富", keywords: ["知的財産", "著作権活用", "ライセンス"], desc: "1Qの知的財産原論の発展。知的財産の実践的活用方法を学ぶ。", delivery: "遠隔" },
     { id: 39, name: "特別講義S", quarter: "3Q", day: "水", period: "8限", module: "応用・実践", type: "選択", credits: 1, capacity: 80, instructor: "特別講師", keywords: ["特別講義"], desc: "特別講義。外部講師を招聘。", delivery: "対面+遠隔" },
     { id: 40, name: "先端コンピュータグラフィックス原論", quarter: "3Q", day: "金", period: "7限", module: "基礎・理論", type: "選択", credits: 1, capacity: 80, instructor: "西田 友是", keywords: ["CG", "コンピュータグラフィックス", "レンダリング", "3DCG"], desc: "先端的なコンピュータグラフィックスの理論と応用を学ぶ。", delivery: "遠隔" },
@@ -68,10 +68,10 @@ const STATIC_SYLLABI = [
     { id: 54, name: "サービスプロトタイピングB", quarter: "4Q", day: "土", period: "34限", module: "応用・実践", type: "選択必修（E系）", credits: 1, capacity: 25, instructor: "山崎 大助", keywords: ["Webアプリケーション", "プロトタイピング", "API"], desc: "サービスプロトタイピングAの発展編。より高度なWebアプリケーション開発を実践。", delivery: "遠隔" },
 
     // ===== 通年（修了課題・ラボプロジェクト） =====
-    { id: 55, name: "修了課題構想", quarter: "通年", day: "土", period: "34限", module: "研究", type: "必修", credits: 2, capacity: null, instructor: "指導教員", keywords: ["修了課題", "研究構想", "テーマ設定"], desc: "修士課程の集大成となる修了課題の構想を行う。研究テーマの設定と計画立案。", delivery: "個別指導" },
-    { id: 56, name: "修了課題計画", quarter: "通年", day: "土", period: "34限", module: "研究", type: "必修", credits: 2, capacity: null, instructor: "指導教員", keywords: ["修了課題", "研究計画", "中間発表"], desc: "修了課題の計画を具体化し、中間発表を行う。", delivery: "個別指導" },
-    { id: 57, name: "修了課題制作", quarter: "通年", day: "土", period: "34限", module: "研究", type: "必修", credits: 4, capacity: null, instructor: "指導教員", keywords: ["修了課題", "論文", "制作", "最終発表"], desc: "修了課題の制作・論文執筆を行い、最終発表・審査を受ける。", delivery: "個別指導" },
-    { id: 58, name: "ラボプロジェクト", quarter: "通年", day: "土", period: "34限", module: "研究", type: "必修", credits: 2, capacity: null, instructor: "指導教員", keywords: ["ラボ", "プロジェクト", "共同研究", "チーム"], desc: "研究室単位でのプロジェクト型研究活動。チームでの共同研究を通じて実践力を養う。", delivery: "個別指導" },
+    { id: 55, name: "修了課題構想", quarter: "通年", day: "土", period: "34限", module: "研究", type: "必修", credits: 1, capacity: null, instructor: "指導教員", keywords: ["修了課題", "研究構想", "テーマ設定"], desc: "修士課程の集大成となる修了課題の構想を行う。研究テーマの設定と計画立案。", delivery: "個別指導" },
+    { id: 56, name: "修了課題計画", quarter: "通年", day: "土", period: "34限", module: "研究", type: "必修", credits: 1, capacity: null, instructor: "指導教員", keywords: ["修了課題", "研究計画", "中間発表"], desc: "修了課題の計画を具体化し、中間発表を行う。", delivery: "個別指導" },
+    { id: 57, name: "修了課題制作", quarter: "通年", day: "土", period: "34限", module: "研究", type: "必修", credits: 6, capacity: null, instructor: "指導教員", keywords: ["修了課題", "論文", "制作", "最終発表"], desc: "修了課題の制作・論文執筆を行い、最終発表・審査を受ける。", delivery: "個別指導" },
+    { id: 58, name: "ラボプロジェクト", quarter: "通年", day: "土", period: "34限", module: "研究", type: "選択必修", credits: 3, capacity: null, instructor: "指導教員", keywords: ["ラボ", "プロジェクト", "共同研究", "チーム"], desc: "研究室単位でのプロジェクト型研究活動。チームでの共同研究を通じて実践力を養う。", delivery: "個別指導" },
 ];
 
 export const SYLLABI = STATIC_SYLLABI.map(s => {
