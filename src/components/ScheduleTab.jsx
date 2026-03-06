@@ -3,6 +3,20 @@ import SCHEDULE_DATA from '../data/schedule.json';
 
 const dayOrder = { '月': 1, '火': 2, '水': 3, '木': 4, '金': 5, '土': 6, '日': 7 };
 
+const formatDayPeriod = (str) => {
+    if (!str) return "未定";
+    return str.split(/[\n/]+/).map(part => {
+        const dMatch = part.match(/^[月火水木金土日]+/);
+        const tMatch = part.match(/\d+/g);
+        if (dMatch && tMatch) {
+            const d = dMatch[0].length === 1 ? dMatch[0] + '曜日' : dMatch[0] + '曜';
+            const t = tMatch.join('-');
+            return `${d} ${t}限`;
+        }
+        return part;
+    }).join(' / ');
+};
+
 export default function ScheduleTab() {
     const [selectedItem, setSelectedItem] = useState(null);
     const [selectedQ, setSelectedQ] = useState("すべて");
@@ -85,8 +99,8 @@ export default function ScheduleTab() {
                                     className="bg-white border border-gray-200 rounded-xl p-5 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group"
                                 >
                                     <div className="flex items-start justify-between mb-3">
-                                        <span className="text-sm font-bold bg-blue-50 text-blue-700 px-3 py-1 rounded-lg border border-blue-100">
-                                            {item['曜日']}
+                                        <span className="text-sm font-bold bg-blue-50 text-blue-700 px-3 py-1 rounded-lg border border-blue-100 whitespace-pre-wrap">
+                                            {formatDayPeriod(item['曜日'])}
                                         </span>
                                         <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
                                             {item['教室'] || '未定'}
@@ -114,8 +128,8 @@ export default function ScheduleTab() {
                         <div className="bg-white border-b border-gray-100 px-6 py-4 flex flex-col gap-2 shrink-0">
                             <div className="flex justify-between items-start">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-sm font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">
-                                        {selectedItem['曜日']}
+                                    <span className="text-sm font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100 whitespace-pre-wrap">
+                                        {formatDayPeriod(selectedItem['曜日'])}
                                     </span>
                                     <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
                                         {selectedItem['教室'] || '未定'}

@@ -49,8 +49,13 @@ async function syncSchedule() {
                 const quarter = sheetName.replace('2026_', '');
 
                 records.forEach(row => {
+                    // A列のヘッダが空欄の場合 '曜日' ではなく '__EMPTY' キーになるケースへの対応
+                    const dayStr = row['曜日'] || row['__EMPTY'];
                     // 曜日や科目名がない空行はスキップ
-                    if (row['曜日'] && row['科目名']) {
+                    if (dayStr && row['科目名']) {
+                        row['曜日'] = String(dayStr).trim();
+                        delete row['__EMPTY']; // 不要なキーは削除
+
                         allRecords.push({
                             Quarter: quarter,
                             ...row

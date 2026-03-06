@@ -6,7 +6,7 @@ import ScheduleTab from "./components/ScheduleTab";
 
 // 曜日の表示順序
 const DAY_ORDER = ["月", "水", "金", "土", "集中", "-"];
-const DAY_LABELS = { "月": "月曜日", "水": "水曜日", "金": "金曜日", "土": "土曜日", "集中": "集中講義", "-": "通年・その他" };
+const DAY_LABELS = { "月": "月曜日", "水": "水曜日", "金": "金曜日", "土": "土曜日", "集中": "集中講義・その他", "-": "通年" };
 const DAY_ICONS = { "月": "🟦", "水": "🟩", "金": "🟧", "土": "🟪", "集中": "⚡", "-": "📅" };
 
 // タグコンポーネント
@@ -147,9 +147,22 @@ export default function App() {
   const groupedByDay = useMemo(() => {
     const groups = {};
     for (const day of DAY_ORDER) {
-      const items = filteredSyl.filter(s => s.day === day);
-      if (items.length > 0) groups[day] = items;
+      groups[day] = [];
     }
+
+    filteredSyl.forEach(s => {
+      if (DAY_ORDER.includes(s.day)) {
+        groups[s.day].push(s);
+      } else if (s.quarter === "夏季集中" || s.day.length > 1) {
+        groups["集中"].push(s);
+      } else {
+        groups["-"].push(s);
+      }
+    });
+
+    Object.keys(groups).forEach(k => {
+      if (groups[k].length === 0) delete groups[k];
+    });
     return groups;
   }, [filteredSyl]);
 
