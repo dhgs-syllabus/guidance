@@ -18,7 +18,6 @@ export const CAREERS = [
     category: "クリエイティブ",
     desc: "生成AIを駆使して広告・映像・ブランディングを統合的にディレクション",
     recommendations: [
-      { id: 1, reason: "生成AI画像/動画のコントロール" },
       { id: 17, reason: "テクノロジー×クリエイティブの最新事例" },
       { id: 6, reason: "情報発信のクリエイティブ・PR観点" },
       { id: 44, reason: "ナラティブ構成力はディレクションの基盤" },
@@ -32,7 +31,6 @@ export const CAREERS = [
     desc: "テクノロジーを用いた芸術表現。美術館展示、パブリックアート、企業コラボなど",
     recommendations: [
       { id: 42, reason: "メディアアートの理論と制作実践" },
-      { id: 37, reason: "先端芸術表現の理論的基盤" },
       { id: 30, reason: "プログラミング×アート表現" },
       { id: 43, reason: "インスタレーション制作の技術力" },
       { id: 22, reason: "物理的作品の具現化手法" },
@@ -47,7 +45,6 @@ export const CAREERS = [
     recommendations: [
       { id: 43, reason: "Unreal Engine等のリアルタイムCG" },
       { id: 40, reason: "CG理論の深い理解" },
-      { id: 1, reason: "AIを使った映像コントロール" },
       { id: 6, reason: "映像制作のプロデュース力" },
       { id: 44, reason: "映像の構成力" },
     ],
@@ -58,7 +55,6 @@ export const CAREERS = [
     category: "クリエイティブ",
     desc: "AIアバター・AIクローンを設計・プロデュース。AI接客員、タレントのAI分身など",
     recommendations: [
-      { id: 1, reason: "生成AIによるビジュアル制作" },
       { id: 44, reason: "AIキャラクターの人格・ナラティブ設計" },
       { id: 23, reason: "デジタルクローンの倫理問題" },
       { id: 47, reason: "ブランディング戦略" },
@@ -86,7 +82,6 @@ export const CAREERS = [
     category: "テクノロジー",
     desc: "複数のAIエージェントを統合指揮し、映像・音楽・テキスト・3Dを同時生成する「AIの指揮者」",
     recommendations: [
-      { id: 1, reason: "生成AIコントロールの基盤" },
       { id: 52, reason: "AI×ゲーム×インタラクション" },
       { id: 41, reason: "AIパイプラインにはコード力が必要" },
       { id: 51, reason: "より実践的なプログラミングスキル" },
@@ -257,7 +252,6 @@ export const CAREERS = [
     category: "社会・教育",
     desc: "AI個別最適化学習、VR教育、マイクロラーニングなど次世代の教育プラットフォームを開発",
     recommendations: [
-      { id: 2, reason: "eラーニング・アダプティブラーニングを体験的に理解" },
       { id: 18, reason: "EdTechプロダクトのMVP構築" },
       { id: 54, reason: "より高度なWebアプリ開発" },
       { id: 53, reason: "VR教育コンテンツの技術基盤" },
@@ -284,7 +278,6 @@ export const CAREERS = [
     category: "社会・教育",
     desc: "AIが記事・動画・ポッドキャストを生成し、人間がキュレーション・品質管理する新メディア運営",
     recommendations: [
-      { id: 1, reason: "AI生成コンテンツのコントロール" },
       { id: 8, reason: "メディアのマネタイズ・集客" },
       { id: 20, reason: "デジタルメディアの最新動向" },
       { id: 13, reason: "文章品質の基準設計力" },

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "admin": "vite --open /admin.html",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -12,6 +13,9 @@
     "sync-syllabus": "node scripts/sync-syllabus.js"
   },
   "dependencies": {
+    "framer-motion": "^12.35.0",
+    "fuse.js": "^7.1.0",
+    "lucide-react": "^0.577.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

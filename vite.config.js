@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { dhuAdminApi } from './plugins/vite-plugin-admin-api.js'
 
 // Vite設定 - DHU大学院 履修ガイダンスポータル
 // 本番ビルド時のみGitHub Pages用のベースパスを適用
@@ -9,5 +10,14 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     tailwindcss(),
+    dhuAdminApi(),
   ],
+  build: {
+    rollupOptions: {
+      input: {
+        main: 'index.html',
+        // admin.html は本番ビルドに含めない
+      },
+    },
+  },
 }))

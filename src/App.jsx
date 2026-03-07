@@ -1,13 +1,22 @@
-import { useState, useRef, useEffect, useMemo } from "react";
-import { SYLLABI, MODULES, QUARTERS } from "./data/syllabi";
+import { useState, useMemo } from "react";
+import { SYLLABI, MODULES } from "./data/syllabi";
 import { FAQS, FAQ_CATS } from "./data/faqs";
 import { CAREERS, CAREER_CATEGORIES } from "./data/careers";
-import ScheduleTab from "./components/ScheduleTab";
+import config from "./data/config.json";
 
-// 曜日の表示順序
-const DAY_ORDER = ["月", "水", "金", "土", "集中", "-"];
-const DAY_LABELS = { "月": "月曜日", "水": "水曜日", "金": "金曜日", "土": "土曜日", "集中": "集中講義・その他", "-": "通年" };
-const DAY_ICONS = { "月": "🟦", "水": "🟩", "金": "🟧", "土": "🟪", "集中": "⚡", "-": "📅" };
+// クォータータブ定義
+const QUARTER_TABS = [
+  { id: "1Q", label: "1Q", quarter: "1Q" },
+  { id: "2Q", label: "2Q", quarter: "2Q" },
+  { id: "集中", label: "集中", quarter: "夏季集中" },
+  { id: "3Q", label: "3Q", quarter: "3Q" },
+  { id: "4Q", label: "4Q", quarter: "4Q" },
+  { id: "修了課題", label: "修了課題", quarter: "通年" },
+];
+
+// 曜日グループ定義
+const DAY_ORDER = ["月", "火", "水", "木", "金", "土"];
+const DAY_LABELS = { "月": "月曜日", "火": "火曜日", "水": "水曜日", "木": "木曜日", "金": "金曜日", "土": "土曜日" };
 
 // タグコンポーネント
 const Tag = ({ label, color = "blue" }) => {
@@ -121,54 +130,55 @@ export default function App() {
   const [tab, setTab] = useState("guidance");
   const [sylSearch, setSylSearch] = useState("");
   const [sylModule, setSylModule] = useState("すべて");
-  const [sylQuarter, setSylQuarter] = useState("すべて");
+  const [sylSubTab, setSylSubTab] = useState("1Q");
   const [faqSearch, setFaqSearch] = useState("");
   const [faqCat, setFaqCat] = useState("すべて");
   const [openFaq, setOpenFaq] = useState(null);
   const [selectedCareer, setSelectedCareer] = useState(null);
   const [careerCat, setCareerCat] = useState("すべて");
-  const [messages, setMessages] = useState([{ role: "assistant", content: "こんにちは！DHU大学院の履修について何でも聞いてください。シラバスやFAQの内容をもとに回答します。" }]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const chatEndRef = useRef(null);
-  const [collapsedDays, setCollapsedDays] = useState({});
   const [selectedSyllabus, setSelectedSyllabus] = useState(null);
+  const [collapsedDays, setCollapsedDays] = useState({});
 
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+  // 現在のクォータータブに対応するquarter値
+  const activeQuarter = QUARTER_TABS.find(t => t.id === sylSubTab)?.quarter;
 
-  // シラバスのフィルタリング
+  // シラバスのフィルタリング（クォータータブ + モジュール + 検索）
   const filteredSyl = SYLLABI.filter(s =>
+    s.quarter === activeQuarter &&
     (sylModule === "すべて" || s.module === sylModule) &&
-    (sylQuarter === "すべて" || s.quarter === sylQuarter) &&
     (sylSearch === "" || s.name.includes(sylSearch) || s.instructor.includes(sylSearch) || s.keywords.some(k => k.includes(sylSearch)) || s.desc.includes(sylSearch))
   );
+
+  // 各タブの科目数カウント
+  const quarterCounts = useMemo(() => {
+    const counts = {};
+    for (const qt of QUARTER_TABS) {
+      counts[qt.id] = SYLLABI.filter(s =>
+        s.quarter === qt.quarter &&
+        (sylModule === "すべて" || s.module === sylModule) &&
+        (sylSearch === "" || s.name.includes(sylSearch) || s.instructor.includes(sylSearch) || s.keywords.some(k => k.includes(sylSearch)) || s.desc.includes(sylSearch))
+      ).length;
+    }
+    return counts;
+  }, [sylModule, sylSearch]);
 
   // 曜日ごとにグループ化
   const groupedByDay = useMemo(() => {
     const groups = {};
-    for (const day of DAY_ORDER) {
-      groups[day] = [];
+    for (const s of filteredSyl) {
+      // 曜日が1文字（月〜土）ならそのまま、それ以外は「その他」
+      const dayKey = DAY_ORDER.includes(s.day) ? s.day : "other";
+      if (!groups[dayKey]) groups[dayKey] = [];
+      groups[dayKey].push(s);
     }
-
-    filteredSyl.forEach(s => {
-      if (DAY_ORDER.includes(s.day)) {
-        groups[s.day].push(s);
-      } else if (s.quarter === "夏季集中" || s.day.length > 1) {
-        groups["集中"].push(s);
-      } else {
-        groups["-"].push(s);
-      }
-    });
-
-    Object.keys(groups).forEach(k => {
-      if (groups[k].length === 0) delete groups[k];
-    });
-    return groups;
+    // DAY_ORDER順にソート、otherは末尾
+    const sorted = {};
+    for (const d of DAY_ORDER) {
+      if (groups[d]) sorted[d] = groups[d];
+    }
+    if (groups["other"]) sorted["other"] = groups["other"];
+    return sorted;
   }, [filteredSyl]);
-
-  const toggleDay = (day) => {
-    setCollapsedDays(prev => ({ ...prev, [day]: !prev[day] }));
-  };
 
   // FAQのフィルタリング
   const filteredFaq = FAQS.filter(f =>
@@ -182,41 +192,12 @@ export default function App() {
     ? selectedCareer.recommendations.map(r => ({ ...r, course: SYLLABI.find(s => s.id === r.id) })).filter(r => r.course)
     : [];
 
-  // チャット送信（APIキー未設定時はローカル応答）
-  const sendMessage = async () => {
-    if (!input.trim() || loading) return;
-    const userMsg = input.trim();
-    setInput("");
-    const newMsgs = [...messages, { role: "user", content: userMsg }];
-    setMessages(newMsgs);
-    setLoading(true);
-
-    // ローカルFAQマッチング（API未設定時のフォールバック）
-    const matched = FAQS.filter(f => userMsg.includes(f.q.slice(0, 5)) || f.q.includes(userMsg.slice(0, 5)) || f.a.includes(userMsg));
-    const matchedSyl = SYLLABI.filter(s => userMsg.includes(s.name) || s.keywords.some(k => userMsg.includes(k)));
-
-    let reply = "";
-    if (matchedSyl.length > 0) {
-      reply = matchedSyl.map(s => `📚 **${s.name}**\n${s.quarter} / ${s.day}${s.period} / ${s.instructor}\n${s.desc}`).join("\n\n");
-    } else if (matched.length > 0) {
-      reply = matched.map(f => `❓ ${f.q}\n→ ${f.a}`).join("\n\n");
-    } else {
-      reply = "申し訳ありません、該当する情報が見つかりませんでした。シラバスタブやFAQタブで直接検索してみてください。\n\n※AIチャット機能は現在準備中です。";
-    }
-
-    setTimeout(() => {
-      setMessages([...newMsgs, { role: "assistant", content: reply }]);
-      setLoading(false);
-    }, 500);
-  };
 
   const tabs = [
     { id: "guidance", label: "📖 ガイダンス" },
     { id: "syllabus", label: "📚 シラバス" },
-    { id: "schedule", label: "📅 スケジュール" },
-    { id: "faq", label: "❓ FAQ" },
     { id: "career", label: "🎯 キャリアマップ" },
-    { id: "chat", label: "💬 チャット" },
+    { id: "faq", label: "❓ FAQ" },
   ];
 
   return (
@@ -228,7 +209,7 @@ export default function App() {
             <h1 className="text-xl font-bold text-gray-900 tracking-tight">DHU Graduate School</h1>
             <p className="text-xs text-gray-500 mt-0.5">デジタルハリウッド大学大学院 履修ガイダンスポータル</p>
           </div>
-          <span className="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1 rounded-full font-medium">2026年度</span>
+          <span className="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1 rounded-full font-medium">{config.academicYear}</span>
         </div>
       </div>
 
@@ -250,17 +231,17 @@ export default function App() {
         {tab === "guidance" && (
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
             <div className="bg-gradient-to-r from-gray-50 to-white px-5 py-4 border-b border-gray-200">
-              <h3 className="font-bold text-gray-800 text-base">2026年度前期 履修ガイダンス</h3>
+              <h3 className="font-bold text-gray-800 text-base">{config.guidanceTitle}</h3>
               <p className="text-xs text-gray-500 mt-1">カリキュラムの全体像や修了要件についてはこちらのスライドをご確認ください。</p>
             </div>
             <div className="aspect-video w-full bg-gray-100 flex items-center justify-center">
               <iframe
-                src="https://docs.google.com/presentation/d/1BM6ZNRsDmaDe6aBQMihjX-9KoTQpNSuM3-rm8g-uFuc/embed?start=false&loop=false&delayms=3000"
+                src={config.slidesEmbedUrl}
                 frameBorder="0"
                 width="100%"
                 height="100%"
                 allowFullScreen={true}
-                title="2026年度前期 履修ガイダンス"
+                title={config.guidanceTitle}
               ></iframe>
             </div>
           </div>
@@ -269,14 +250,28 @@ export default function App() {
         {/* ===== シラバス ===== */}
         {tab === "syllabus" && (
           <div>
+            {/* クォータータブ */}
+            <div className="flex gap-1 mb-4 bg-gray-100 rounded-lg p-1">
+              {QUARTER_TABS.map(qt => (
+                <button key={qt.id} onClick={() => setSylSubTab(qt.id)}
+                  className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                    sylSubTab === qt.id
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-gray-500 hover:text-gray-800"
+                  }`}>
+                  {qt.label}
+                  <span className={`ml-1.5 text-xs ${sylSubTab === qt.id ? "text-blue-400" : "text-gray-400"}`}>
+                    {quarterCounts[qt.id]}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* 検索 + モジュールフィルタ */}
             <div className="flex gap-3 mb-2 flex-wrap">
               <input value={sylSearch} onChange={e => setSylSearch(e.target.value)}
                 placeholder="科目名・教員名・キーワードで検索..."
                 className="flex-1 min-w-[200px] bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 placeholder-gray-400" />
-              <select value={sylQuarter} onChange={e => setSylQuarter(e.target.value)}
-                className="bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-blue-400 text-gray-600">
-                {QUARTERS.map(q => <option key={q}>{q}</option>)}
-              </select>
               <select value={sylModule} onChange={e => setSylModule(e.target.value)}
                 className="bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-blue-400 text-gray-600">
                 {MODULES.map(m => <option key={m}>{m}</option>)}
@@ -285,37 +280,39 @@ export default function App() {
             <p className="text-xs text-gray-400 mb-4">{filteredSyl.length}科目</p>
 
             {/* 曜日別グループ表示 */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               {Object.entries(groupedByDay).map(([day, courses]) => (
                 <div key={day} className="border border-gray-200 rounded-xl overflow-hidden bg-white">
-                  {/* 曜日ヘッダー */}
                   <button
-                    onClick={() => toggleDay(day)}
-                    className="w-full flex items-center justify-between px-5 py-3.5 bg-gradient-to-r from-gray-50 to-white hover:from-gray-100 transition-colors"
+                    onClick={() => setCollapsedDays(prev => ({ ...prev, [day]: !prev[day] }))}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-gray-50 to-white hover:from-gray-100 transition-colors"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-lg">{DAY_ICONS[day]}</span>
-                      <span className="font-semibold text-gray-800">{DAY_LABELS[day]}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-gray-700 text-sm">{DAY_LABELS[day] || "その他"}</span>
                       <span className="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 rounded-full font-medium">
                         {courses.length}科目
                       </span>
                     </div>
                     <span className={`text-gray-400 text-sm transition-transform duration-200 ${collapsedDays[day] ? '' : 'rotate-180'}`}>▲</span>
                   </button>
-                  {/* 科目リスト */}
                   {!collapsedDays[day] && (
                     <div className="grid gap-3 p-4 pt-2">
                       {courses.map(s => (
                         <div key={s.id} className="bg-white border border-gray-200 rounded-xl p-4 hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer group"
                           onClick={() => setSelectedSyllabus(s)}>
                           <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0 w-14 text-center pt-0.5">
+                              {s.period && s.period !== "-" ? (
+                                <div className="text-xs text-gray-500 font-medium">{s.period}</div>
+                              ) : (
+                                <div className="text-sm font-bold text-gray-400">-</div>
+                              )}
+                            </div>
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1 flex-wrap">
                                 <Tag label={s.type} color={typeColor(s.type)} />
-                                <Tag label={s.quarter} color="amber" />
                                 <Tag label={`${s.credits}単位`} color="green" />
                                 <Tag label={s.module} color="gray" />
-                                {s.day !== "-" && <span className="text-xs text-gray-400">{s.day}{s.period}</span>}
                               </div>
                               <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">{s.name}</h3>
                               <p className="text-xs text-gray-500 mt-1">{s.instructor}{s.capacity ? ` ／ 定員${s.capacity}名` : ""} ／ {s.delivery}</p>
@@ -339,9 +336,6 @@ export default function App() {
             </div>
           </div>
         )}
-
-        {/* ===== スケジュール ===== */}
-        {tab === "schedule" && <ScheduleTab />}
 
         {/* ===== FAQ ===== */}
         {tab === "faq" && (
@@ -368,7 +362,10 @@ export default function App() {
                   </button>
                   {openFaq === f.id && (
                     <div className="px-4 pb-4 pt-1 text-sm text-gray-600 leading-relaxed border-t border-gray-100 bg-gray-50">
-                      {f.a}
+                      {f.a.split(/(\[[^\]]+\]\([^)]+\))/).map((part, i) => {
+                        const m = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+                        return m ? <a key={i} href={m[2]} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline hover:text-blue-800">{m[1]}</a> : part;
+                      })}
                     </div>
                   )}
                 </div>
@@ -378,38 +375,6 @@ export default function App() {
           </div>
         )}
 
-        {/* ===== チャット ===== */}
-        {tab === "chat" && (
-          <div className="flex flex-col" style={{ height: "calc(100vh - 230px)" }}>
-            <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-1">
-              {messages.map((m, i) => (
-                <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-xl px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${m.role === "user" ? "bg-blue-500 text-white" : "bg-white border border-gray-200 text-gray-700 shadow-sm"}`}>
-                    {m.content}
-                  </div>
-                </div>
-              ))}
-              {loading && (
-                <div className="flex justify-start">
-                  <div className="bg-white border border-gray-200 px-4 py-3 rounded-2xl text-sm text-gray-400 shadow-sm">
-                    考えています<span className="animate-pulse">...</span>
-                  </div>
-                </div>
-              )}
-              <div ref={chatEndRef} />
-            </div>
-            <div className="flex gap-2">
-              <input value={input} onChange={e => setInput(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && sendMessage()}
-                placeholder="質問を入力してください..."
-                className="flex-1 bg-white border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 placeholder-gray-400 shadow-sm" />
-              <button onClick={sendMessage} disabled={loading}
-                className="bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white px-5 py-3 rounded-xl text-sm font-medium transition-colors shadow-sm">
-                送信
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* ===== キャリアマップ ===== */}
         {tab === "career" && (
@@ -441,32 +406,42 @@ export default function App() {
               ))}
             </div>
 
-            {/* 推奨科目詳細 */}
+            {/* キャリア詳細モーダル */}
             {selectedCareer && (
-              <div className="bg-white border border-blue-200 rounded-xl shadow-sm overflow-hidden">
-                <div className="bg-gradient-to-r from-blue-50 to-white px-5 py-4 border-b border-blue-100">
-                  <h3 className="font-bold text-blue-800 text-base">{selectedCareer.icon} {selectedCareer.title}</h3>
-                  <p className="text-xs text-blue-600 mt-1">{selectedCareer.desc}</p>
-                </div>
-                <div className="p-4">
-                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">推奨履修科目（{careerRecommendations.length}科目）</h4>
-                  <div className="grid gap-2">
-                    {careerRecommendations.map(({ course: s, reason }) => (
-                      <div key={s.id}
-                        className="flex items-start gap-3 bg-gray-50 hover:bg-blue-50 rounded-lg px-4 py-3 cursor-pointer transition-colors group"
-                        onClick={() => setSelectedSyllabus(s)}>
-                        <span className="text-xs text-gray-400 font-mono w-8 mt-0.5 flex-shrink-0">{s.quarter}</span>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm text-gray-900 font-medium group-hover:text-blue-700 transition-colors">{s.name}</span>
-                            <Tag label={s.type} color={typeColor(s.type)} />
-                            <Tag label={`${s.credits}単位`} color="green" />
-                          </div>
-                          <p className="text-xs text-gray-500 mt-1">{reason}</p>
-                        </div>
-                        <span className="text-xs text-gray-300 group-hover:text-blue-400 mt-0.5 flex-shrink-0 transition-colors">詳細→</span>
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setSelectedCareer(null)}>
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+                <div className="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                  <div className="sticky top-0 bg-white/95 backdrop-blur border-b border-gray-100 px-6 py-4 flex items-start justify-between rounded-t-2xl">
+                    <div className="flex-1 pr-4">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-2xl">{selectedCareer.icon}</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">{selectedCareer.category}</span>
                       </div>
-                    ))}
+                      <h2 className="text-lg font-bold text-gray-900">{selectedCareer.title}</h2>
+                      <p className="text-sm text-gray-500 mt-1">{selectedCareer.desc}</p>
+                    </div>
+                    <button onClick={() => setSelectedCareer(null)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none p-1 transition-colors">✕</button>
+                  </div>
+                  <div className="px-6 py-5">
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">推奨履修科目（{careerRecommendations.length}科目）</h4>
+                    <div className="grid gap-2">
+                      {careerRecommendations.map(({ course: s, reason }) => (
+                        <div key={s.id}
+                          className="flex items-start gap-3 bg-gray-50 hover:bg-blue-50 rounded-lg px-4 py-3 cursor-pointer transition-colors group"
+                          onClick={() => setSelectedSyllabus(s)}>
+                          <span className="text-xs text-gray-400 font-mono w-8 mt-0.5 flex-shrink-0">{s.quarter}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm text-gray-900 font-medium group-hover:text-blue-700 transition-colors">{s.name}</span>
+                              <Tag label={s.type} color={typeColor(s.type)} />
+                              <Tag label={`${s.credits}単位`} color="green" />
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">{reason}</p>
+                          </div>
+                          <span className="text-xs text-gray-300 group-hover:text-blue-400 mt-0.5 flex-shrink-0 transition-colors">詳細→</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
