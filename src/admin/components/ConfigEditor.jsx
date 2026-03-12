@@ -37,7 +37,24 @@ export default function ConfigEditor({ onToast }) {
   }
 
   function update(key, value) {
-    setConfig({ ...config, [key]: value });
+    let finalValue = value;
+
+    // スライドURLの場合、自動で /embed 形式に変換
+    if (key === 'slidesEmbedUrl' && value.includes('/presentation/d/')) {
+      const slideId = value.match(/\/d\/([^/]+)/)?.[1];
+      if (slideId && !value.includes('/embed')) {
+        finalValue = `https://docs.google.com/presentation/d/${slideId}/embed?start=false&loop=false&delayms=3000&rm=minimal`;
+      }
+    }
+    // スプレッドシートURLの場合、IDのみを抽出
+    if (key === 'syllabusSheetId' && value.includes('/spreadsheets/d/')) {
+      const sheetId = value.match(/\/d\/([^/]+)/)?.[1];
+      if (sheetId) {
+        finalValue = sheetId;
+      }
+    }
+
+    setConfig({ ...config, [key]: finalValue });
   }
 
   if (!config) return <p className="text-gray-400 py-10 text-center">{'\u8aad\u307f\u8fbc\u307f\u4e2d...'}</p>;
@@ -68,14 +85,22 @@ export default function ConfigEditor({ onToast }) {
         <h2 className="text-lg font-bold mb-4">Google{'\u9023\u643a'}</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">{'\u30b9\u30e9\u30a4\u30c9Embed URL'}</label>
-            <input value={config.slidesEmbedUrl || ''} onChange={e => update('slidesEmbedUrl', e.target.value)}
-              className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono text-xs" />
+            <label className="block text-xs font-medium text-gray-500 mb-1">ガイダンス資料 (GoogleスライドURL)</label>
+            <input
+              value={config.slidesEmbedUrl || ''}
+              onChange={e => update('slidesEmbedUrl', e.target.value)}
+              className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono text-xs"
+              placeholder="https://docs.google.com/presentation/d/.../edit を貼り付け"
+            />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">{'\u30b7\u30e9\u30d0\u30b9Spreadsheet ID'}</label>
-            <input value={config.syllabusSheetId || ''} onChange={e => update('syllabusSheetId', e.target.value)}
-              className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono text-xs" />
+            <label className="block text-xs font-medium text-gray-500 mb-1">シラバス原本 (GoogleスプレッドシートURL)</label>
+            <input
+              value={config.syllabusSheetId || ''}
+              onChange={e => update('syllabusSheetId', e.target.value)}
+              className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono text-xs"
+              placeholder="https://docs.google.com/spreadsheets/d/.../edit を貼り付け"
+            />
           </div>
         </div>
       </div>
