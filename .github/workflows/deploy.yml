@@ -1,10 +1,9 @@
-# GitHub Pagesへの自動デプロイ
-# mainブランチへのpush時にビルド＆デプロイを実行
 name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ['main']
+    branches:
+      - master
   workflow_dispatch:
 
 permissions:
@@ -13,7 +12,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: 'pages'
+  group: pages
   cancel-in-progress: false
 
 jobs:
@@ -22,12 +21,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: 'true'
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 18
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
@@ -36,20 +37,20 @@ jobs:
         run: npm run build
 
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v4
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist'
+          path: dist
 
   deploy:
     environment:
       name: github-pages
-      url: ${{ github.event.deployment.payload.web_url || '' }}
-    runs-on: ubuntu-latest
+      url: ${{ steps.deployment.outputs.page_url }}
     needs: build
+    runs-on: ubuntu-latest
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v2
