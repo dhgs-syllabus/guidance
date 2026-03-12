@@ -240,7 +240,7 @@ export default function App() {
                 frameBorder="0"
                 width="100%"
                 height="100%"
-                allowFullScreen={true}
+                allow="autoplay"
                 title={config.guidanceTitle}
               ></iframe>
             </div>
@@ -254,11 +254,10 @@ export default function App() {
             <div className="flex gap-1 mb-4 bg-gray-100 rounded-lg p-1">
               {QUARTER_TABS.map(qt => (
                 <button key={qt.id} onClick={() => setSylSubTab(qt.id)}
-                  className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-all ${
-                    sylSubTab === qt.id
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-gray-500 hover:text-gray-800"
-                  }`}>
+                  className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-all ${sylSubTab === qt.id
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-500 hover:text-gray-800"
+                    }`}>
                   {qt.label}
                   <span className={`ml-1.5 text-xs ${sylSubTab === qt.id ? "text-blue-400" : "text-gray-400"}`}>
                     {quarterCounts[qt.id]}
