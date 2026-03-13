@@ -64,18 +64,23 @@ src/
 
 ## データソース
 
-- **シラバス**: Google Spreadsheet（自動同期）
-- **スケジュール**: JSON ファイル
-- **FAQ/その他**: JSON ファイル
-- **設定**: `src/data/config.json`（Google Sheets/Slides URL管理）
+すべてのデータソース情報は `src/data/config.json` で一元管理します。
 
 ### Google Spreadsheet 連携
 
-`src/data/config.json` で以下を管理：
-- `syllabusSheetId` - シラバス原本のシートID
-- `slidesEmbedUrl` - ガイダンス資料のスライドURL
+`src/data/config.json` で管理：
+- `syllabusSheetId` - シラバス原本（58科目）
+- `scheduleSheetId` - スケジュール・開講連絡情報
+- `slidesEmbedUrl` - ガイダンス資料（Googleスライド）
 
-`npm run sync` で自動更新
+`npm run sync` で同期更新
+
+### データファイル（JSON）
+
+- `src/data/syllabi.json` - シラバスデータ（`npm run sync` で更新）
+- `src/data/schedule.json` - スケジュール（`npm run sync` で更新）
+- `src/data/faqs.json` - FAQ（大きなカリキュラム変更時のみ更新）
+- `src/data/careerMap.json` - キャリアマップ（Claude 相談後に更新）
 
 ## デプロイ
 
