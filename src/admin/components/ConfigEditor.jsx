@@ -47,7 +47,7 @@ export default function ConfigEditor({ onToast }) {
       }
     }
     // スプレッドシートURLの場合、IDのみを抽出
-    if (key === 'syllabusSheetId' && value.includes('/spreadsheets/d/')) {
+    if ((key === 'syllabusSheetId' || key === 'scheduleSheetId') && value.includes('/spreadsheets/d/')) {
       const sheetId = value.match(/\/d\/([^/]+)/)?.[1];
       if (sheetId) {
         finalValue = sheetId;
@@ -98,6 +98,15 @@ export default function ConfigEditor({ onToast }) {
             <input
               value={config.syllabusSheetId || ''}
               onChange={e => update('syllabusSheetId', e.target.value)}
+              className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono text-xs"
+              placeholder="https://docs.google.com/spreadsheets/d/.../edit を貼り付け"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">開講連絡情報 (GoogleスプレッドシートURL)</label>
+            <input
+              value={config.scheduleSheetId || ''}
+              onChange={e => update('scheduleSheetId', e.target.value)}
               className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono text-xs"
               placeholder="https://docs.google.com/spreadsheets/d/.../edit を貼り付け"
             />
