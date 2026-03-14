@@ -7,7 +7,7 @@
   "_notes": {
     "syllabusSheetId": "シラバス原本（58科目）",
     "scheduleSheetId": "スケジュール・開講連絡情報",
-    "faqData": "src/data/faqs.json（手動管理、大きな変更時のみ更新）",
-    "careerMapData": "src/data/careerMap.json（Claude相談後に更新）"
+    "faqData": "src/data/faqs.js（手動管理、大きな変更時のみ更新）",
+    "careerMapData": "src/data/careers.js（Claude相談後に更新）"
   }
 }

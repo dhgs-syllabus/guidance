@@ -9,8 +9,6 @@ export default function FaqEditor({ onToast }) {
   const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState('\u3059\u3079\u3066');
 
-  useEffect(() => { load(); }, []);
-
   async function load() {
     const data = await fetchData('faqs');
     if (data) {
@@ -19,6 +17,8 @@ export default function FaqEditor({ onToast }) {
     }
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { load(); }, []);
   async function save(updatedFaqs, updatedCats) {
     const result = await saveData('faqs', { FAQS: updatedFaqs, FAQ_CATS: updatedCats || categories });
     if (result?.success) {
@@ -104,7 +104,7 @@ export default function FaqEditor({ onToast }) {
 
       {/* List */}
       <div className="space-y-2">
-        {filtered.map((f, idx) => (
+        {filtered.map((f) => (
           <div key={f.id} className="bg-white border border-gray-200 rounded-xl p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
