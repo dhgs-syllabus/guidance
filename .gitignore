@@ -23,3 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 .claude/
+.backup/
+credentials.json
+*.xlsx
+
+# Debug/test files
+debug-output.txt
+test-*.js
