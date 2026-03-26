@@ -3,8 +3,10 @@ import FaqEditor from './components/FaqEditor';
 import CareerEditor from './components/CareerEditor';
 import ConfigEditor from './components/ConfigEditor';
 import ValidationPanel from './components/ValidationPanel';
+import SyllabusEditor from './components/SyllabusEditor';
 
 const TABS = [
+  { id: 'syllabus', label: '\u30b7\u30e9\u30d0\u30b9\u7de8\u96c6' },
   { id: 'faq', label: 'FAQ\u7de8\u96c6' },
   { id: 'career', label: '\u30ad\u30e3\u30ea\u30a2\u30de\u30c3\u30d7' },
   { id: 'config', label: '\u8a2d\u5b9a\u30fb\u5e74\u5ea6' },
@@ -12,7 +14,7 @@ const TABS = [
 ];
 
 export default function AdminApp() {
-  const [tab, setTab] = useState('faq');
+  const [tab, setTab] = useState('syllabus');
   const [toast, setToast] = useState(null);
 
   const showToast = (message, type = 'success') => {
@@ -54,6 +56,7 @@ export default function AdminApp() {
 
       {/* Content */}
       <div className="max-w-5xl mx-auto p-6">
+        {tab === 'syllabus' && <SyllabusEditor onToast={showToast} />}
         {tab === 'faq' && <FaqEditor onToast={showToast} />}
         {tab === 'career' && <CareerEditor onToast={showToast} />}
         {tab === 'config' && <ConfigEditor onToast={showToast} />}

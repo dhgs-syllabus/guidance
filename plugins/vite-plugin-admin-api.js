@@ -223,7 +223,21 @@ export function dhuAdminApi() {
 
           // GET /api/syllabi (read-only)
           if (req.url === '/api/syllabi' && req.method === 'GET') {
+            const jsonPath = path.join(DATA_DIR, 'syllabi.json');
+            if (fs.existsSync(jsonPath)) {
+              const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+              return sendJson(res, data);
+            }
             return sendJson(res, parseSyllabi());
+          }
+
+          // POST /api/syllabi
+          if (req.url === '/api/syllabi' && req.method === 'POST') {
+            const body = await parseBody(req);
+            const jsonPath = path.join(DATA_DIR, 'syllabi.json');
+            backup(jsonPath);
+            fs.writeFileSync(jsonPath, JSON.stringify(body, null, 2) + '\n', 'utf8');
+            return sendJson(res, { success: true });
           }
 
           // POST /api/sync-syllabus

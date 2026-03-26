@@ -113,5 +113,24 @@ export function useAdminApi() {
     }
   }, []);
 
-  return { loading, error, setError, fetchData, saveData, fetchConfig, saveConfig, fetchSyllabi, syncSyllabus, runValidation };
+  const saveSyllabi = useCallback(async (data) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/syllabi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('Failed to save syllabi');
+      return await res.json();
+    } catch (e) {
+      setError(e.message);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return { loading, error, setError, fetchData, saveData, fetchConfig, saveConfig, fetchSyllabi, saveSyllabi, syncSyllabus, runValidation };
 }
