@@ -77,11 +77,15 @@ const STATIC_SYLLABI = [
 export const SYLLABI = STATIC_SYLLABI.map(s => {
     const detail = syllabusData.find(d =>
         d.subject.replace(/\s+/g, '') === s.name.replace(/\s+/g, '') ||
-        s.name.includes(d.subject)
+        s.name.includes(d.subject) ||
+        d.subject.includes(s.name)
     );
     if (detail) {
         return {
             ...s,
+            // syllabi.json で教員名・タイトル等が変更されていれば上書き
+            ...(detail.instructor && { instructor: detail.instructor }),
+            ...(detail.title && { name: detail.title }),
             overview: detail.overview,
             goals: detail.objectives,
             evaluation: detail.evaluation,
