@@ -260,6 +260,35 @@ export function dhuAdminApi() {
             return sendJson(res, validate());
           }
 
+          // GET /api/git-status
+          if (req.url === '/api/git-status' && req.method === 'GET') {
+            try {
+              const status = execSync('git status --porcelain', { cwd: ROOT, encoding: 'utf8' });
+              const changed = status.trim().split('\n').filter(l => l.trim()).length;
+              return sendJson(res, { changed, details: status.trim() });
+            } catch (e) {
+              return sendJson(res, { error: e.message }, 500);
+            }
+          }
+
+          // POST /api/git-push
+          if (req.url === '/api/git-push' && req.method === 'POST') {
+            try {
+              const body = await parseBody(req);
+              const message = body.message || 'コンテンツ更新';
+              execSync('git add -A', { cwd: ROOT, encoding: 'utf8' });
+              const status = execSync('git status --porcelain', { cwd: ROOT, encoding: 'utf8' });
+              if (!status.trim()) {
+                return sendJson(res, { success: true, skipped: true, message: '変更がありません' });
+              }
+              execSync(`git commit -m "${message.replace(/"/g, '\\"')}"`, { cwd: ROOT, encoding: 'utf8' });
+              const pushResult = execSync('git push 2>&1', { cwd: ROOT, encoding: 'utf8', timeout: 30000 });
+              return sendJson(res, { success: true, message: 'push完了', details: pushResult.trim() });
+            } catch (e) {
+              return sendJson(res, { success: false, error: e.message }, 500);
+            }
+          }
+
           next();
         } catch (e) {
           sendJson(res, { error: e.message }, 500);

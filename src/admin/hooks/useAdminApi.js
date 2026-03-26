@@ -132,5 +132,35 @@ export function useAdminApi() {
     }
   }, []);
 
-  return { loading, error, setError, fetchData, saveData, fetchConfig, saveConfig, fetchSyllabi, saveSyllabi, syncSyllabus, runValidation };
+  const fetchGitStatus = useCallback(async () => {
+    try {
+      const res = await fetch('/api/git-status');
+      if (!res.ok) throw new Error('Failed to get git status');
+      return await res.json();
+    } catch (e) {
+      setError(e.message);
+      return null;
+    }
+  }, []);
+
+  const gitPush = useCallback(async (message) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/git-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message }),
+      });
+      if (!res.ok) throw new Error('Push failed');
+      return await res.json();
+    } catch (e) {
+      setError(e.message);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return { loading, error, setError, fetchData, saveData, fetchConfig, saveConfig, fetchSyllabi, saveSyllabi, syncSyllabus, runValidation, fetchGitStatus, gitPush };
 }
