@@ -21,7 +21,6 @@ const IGNORE_SHEETS = [
 async function syncSyllabus() {
     try {
         let allSyllabi = [];
-        let fetchedSubjects = new Set();
 
         // 複数のスプレッドシートから取得（後のものが優先されるように逆順で処理するか、単に後ろに追加）
         // ここでは単純に追加し、後で重複を排除する

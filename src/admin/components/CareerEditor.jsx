@@ -11,8 +11,6 @@ export default function CareerEditor({ onToast }) {
   const [showPicker, setShowPicker] = useState(false);
   const [filterCat, setFilterCat] = useState('\u3059\u3079\u3066');
 
-  useEffect(() => { load(); }, []);
-
   async function load() {
     const [careerData, sylData] = await Promise.all([
       fetchData('careers'),
@@ -24,6 +22,9 @@ export default function CareerEditor({ onToast }) {
     }
     if (sylData) setSyllabi(sylData);
   }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { load(); }, []);
 
   function getSyllabus(id) {
     return syllabi.find(s => s.id === id);
