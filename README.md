@@ -84,13 +84,18 @@ src/
 
 ## デプロイ
 
-### Vercel（推奨・無料）
+### GitHub Pages（採用中）
 
-GitHub 連携で自動デプロイ。パスワード保護対応。
+`master` ブランチへの push をトリガーに GitHub Actions（`.github/workflows/deploy.yml`）が自動でビルド・デプロイします。
 
-1. [Vercel](https://vercel.com) に GitHub で登録
-2. このリポジトリを接続
-3. `vercel.json` でパスワード設定
+公開URL: https://dhgs-syllabus.github.io/guidance/
+
+```bash
+git add -A && git commit -m "update content"
+git push
+```
+
+push後 約30秒〜1分で反映されます。詳細な運用フローは [docs/admin-manual.md](docs/admin-manual.md) を参照。
 
 ### ビルド
 
@@ -98,4 +103,4 @@ GitHub 連携で自動デプロイ。パスワード保護対応。
 npm run build
 ```
 
-`dist/` フォルダが生成されます。
+`dist/` フォルダが生成されます（`vite.config.js` の設定により本番ビルドは `/guidance/` をベースパスとして出力）。
