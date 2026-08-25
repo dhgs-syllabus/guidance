@@ -7,12 +7,13 @@ export default function ConfigEditor({ onToast }) {
   const [syncResult, setSyncResult] = useState(null);
   const [syncing, setSyncing] = useState(false);
 
-  useEffect(() => { load(); }, []);
-
   async function load() {
     const data = await fetchConfig();
     if (data) setConfig(data);
   }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { load(); }, []);
 
   async function handleSave() {
     const result = await saveConfig(config);

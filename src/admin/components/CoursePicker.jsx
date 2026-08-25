@@ -14,6 +14,7 @@ export default function CoursePicker({ currentIds = [], onSelect, onClose }) {
       const filtered = data.filter(s => s.type !== '\u5fc5\u4fee');
       setSyllabi(filtered);
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filtered = syllabi.filter(s =>
